@@ -1,0 +1,8 @@
+node_modules/
+.expo/
+.env
+.env.local
+*.log
+services/drowsiness/.venv/
+services/drowsiness/models/
+services/drowsiness/__pycache__/

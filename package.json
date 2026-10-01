@@ -1,0 +1,36 @@
+{
+  "name": "smart-vehicle-safety",
+  "version": "2.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "typecheck": "tsc --noEmit",
+    "check": "node scripts/check-project.cjs && tsc --noEmit",
+    "test:onboarding": "node scripts/test-onboarding.cjs",
+    "test:safety-actions": "node scripts/test-safety-actions.cjs",
+    "test:mpu-calibration": "node scripts/test-mpu-calibration.cjs",
+    "test:sms": "node scripts/test-sms.cjs",
+    "test:drowsiness": "python -m unittest discover -s services/drowsiness -p test_drowsiness.py -v && node scripts/test-drowsiness.cjs"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~57.0.17",
+    "expo-camera": "~57.0.5",
+    "expo-linear-gradient": "~57.0.2",
+    "expo-status-bar": "~57.0.1",
+    "firebase": "^12.0.0",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-maps": "1.27.2",
+    "react-native-qrcode-svg": "^6.3.26",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4",
+    "react-native-webview": "13.16.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  }
+}

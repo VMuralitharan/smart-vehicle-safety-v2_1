@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Smart Vehicle Safety",
+    "slug": "smart-vehicle-safety",
+    "scheme": "smartvehiclesafety",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.smartvehiclesafety.mobile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.smartvehiclesafety.mobile"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Smart Vehicle Safety to scan bus joining QR codes."
+        }
+      ]
+    ]
+  }
+}

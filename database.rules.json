@@ -1,0 +1,274 @@
+
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        "profile": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && newData.exists() && ((!data.exists() && (newData.child('role').val() === 'owner' || newData.child('role').val() === 'passenger')) || (data.exists() && (data.child('role').val() === newData.child('role').val() || (data.child('role').val() === 'owner' && newData.child('role').val() === 'passenger' && !root.child('ownerVehicles').child($uid).exists() && !root.child('users').child($uid).child('vehicles').exists()) || (!data.child('role').exists() && (newData.child('role').val() === 'owner' || newData.child('role').val() === 'passenger')))))",
+          ".validate": "newData.hasChildren(['name','email','role']) && newData.child('name').isString() && newData.child('name').val().length <= 120 && newData.child('email').isString() && (newData.child('role').val() === 'owner' || newData.child('role').val() === 'passenger')"
+        },
+        "pendingJoin": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "migrationComplete": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && newData.val() === true"
+        },
+        "vehicles": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "migrationMap": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+    "ownerVehicles": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$vehicleId": {
+          ".write": "auth != null && auth.uid === $uid && (newData.val() === true || !newData.exists())"
+        }
+      }
+    },
+    "passengerVehicles": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$vehicleId": {
+          ".write": "auth != null && ((auth.uid === root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() && (!newData.exists() || (root.child('vehicleMembers').child($vehicleId).child($uid).exists() && newData.val() === true))) || (auth.uid === $uid && !newData.exists()))"
+        }
+      }
+    },
+    "vehicles": {
+      "$vehicleId": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('profile').child('role').val() === 'owner' && newData.exists() && newData.child('meta').child('ownerUid').val() === auth.uid && (!data.exists() || data.child('meta').child('ownerUid').val() === auth.uid)",
+        "meta": {
+          ".read": "auth != null && (data.child('ownerUid').val() === auth.uid || root.child('vehicleMembers').child($vehicleId).child(auth.uid).exists())",
+          ".validate": "newData.hasChildren(['ownerUid','name','plateNumber','route']) && newData.child('ownerUid').isString() && newData.child('name').isString() && newData.child('name').val().length <= 120 && newData.child('plateNumber').isString() && newData.child('plateNumber').val().length <= 40 && newData.child('route').isString() && newData.child('route').val().length <= 160"
+        },
+        "private": {
+          ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid"
+        }
+      }
+    },
+    "publicVehicles": {
+      "$vehicleId": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && newData.child('ownerUid').val() === auth.uid"
+      }
+    },
+    "vehicleMembers": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid)",
+          ".write": "auth != null && ((root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && (newData.val() === null || (newData.child('role').val() === 'passenger' && newData.child('approvedAt').isNumber()))) || (auth.uid === $uid && !newData.exists()))"
+        }
+      }
+    },
+    "joinRequests": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid)",
+          ".write": "auth != null && ((auth.uid === $uid && ((!data.exists() && newData.child('requesterUid').val() === auth.uid && newData.child('status').val() === 'pending' && newData.child('code').val() === root.child('vehicles').child($vehicleId).child('private').child('joinCode').val() && root.child('users').child(auth.uid).child('profile').child('role').val() === 'passenger') || !newData.exists())) || (auth.uid === root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() && data.exists() && (newData.child('status').val() === 'approved' || newData.child('status').val() === 'rejected') && newData.child('requesterUid').val() === data.child('requesterUid').val() && newData.child('code').val() === data.child('code').val()))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['requesterUid','displayName','code','status','createdAt']) && newData.child('displayName').isString() && newData.child('displayName').val().length <= 120 && newData.child('code').isString() && newData.child('code').val().length <= 40 && newData.child('createdAt').isNumber())"
+        }
+      }
+    },
+    "deviceConfig": {
+      "$vehicleId": {
+        "mpu": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('profile').child('role').val() === 'owner' && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('profile').child('role').val() === 'owner' && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && newData.exists() && newData.child('benchTestMode').val() === true && newData.child('revision').isNumber() && ((!data.exists() && newData.child('revision').val() === 1) || (data.exists() && data.child('revision').isNumber() && newData.child('revision').val() === data.child('revision').val() + 1))",
+          ".validate": "newData.hasChildren(['thresholdG','requiredSamples','cooldownMs','revision','benchTestMode'])",
+          "thresholdG": {
+            ".validate": "newData.isNumber() && newData.val() >= 1.2 && newData.val() <= 8.0"
+          },
+          "requiredSamples": {
+            ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 20 && newData.val() % 1 === 0"
+          },
+          "cooldownMs": {
+            ".validate": "newData.isNumber() && newData.val() >= 5000 && newData.val() <= 120000 && newData.val() % 1 === 0"
+          },
+          "revision": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 2147483647 && newData.val() % 1 === 0"
+          },
+          "benchTestMode": {
+            ".validate": "newData.val() === true"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "drowsiness": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('profile').child('role').val() === 'owner' && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('profile').child('role').val() === 'owner' && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && newData.exists() && newData.child('benchTestMode').val() === true && newData.child('revision').isNumber() && ((!data.exists() && newData.child('revision').val() === 1) || (data.exists() && data.child('revision').isNumber() && newData.child('revision').val() === data.child('revision').val() + 1))",
+          ".validate": "newData.hasChildren(['closureDurationMs','openEyeScore','closedEyeScore','calibrated','revision','benchTestMode']) && (newData.child('calibrated').val() === false || newData.child('closedEyeScore').val() - newData.child('openEyeScore').val() >= 0.15)",
+          "closureDurationMs": {
+            ".validate": "newData.isNumber() && newData.val() >= 5000 && newData.val() <= 120000 && newData.val() % 1000 === 0"
+          },
+          "openEyeScore": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1"
+          },
+          "closedEyeScore": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1"
+          },
+          "calibrated": {
+            ".validate": "newData.isBoolean()"
+          },
+          "revision": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 2147483647 && newData.val() % 1 === 0"
+          },
+          "benchTestMode": {
+            ".validate": "newData.val() === true"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "deviceData": {
+      "$vehicleId": {
+        ".read": "auth != null && (root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid || root.child('vehicleMembers').child($vehicleId).child(auth.uid).exists())",
+        ".write": false
+      }
+    },
+    "incidentReviews": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "$incidentId": {
+          ".write": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && root.child('deviceData').child($vehicleId).child('incidents').child($incidentId).exists()",
+          ".validate": "newData.exists() && (!newData.child('acknowledgedAt').exists() || newData.child('acknowledgedAt').isNumber()) && (!newData.child('resolvedAt').exists() || newData.child('resolvedAt').isNumber()) && (!data.child('clearedAt').exists() || newData.child('clearedAt').val() === data.child('clearedAt').val()) && (!newData.child('clearedAt').exists() || (newData.child('clearedAt').isNumber() && root.child('deviceData').child($vehicleId).child('incidents').child($incidentId).child('type').val() === 'accident' && data.child('resolvedAt').isNumber() && newData.child('resolvedAt').val() === data.child('resolvedAt').val()))"
+        }
+      }
+    },
+    "emergencyContacts": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        ".write": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "$contactId": {
+          ".validate": "!newData.exists() || (newData.hasChildren(['name','phone']) && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 120 && newData.child('phone').isString() && newData.child('phone').val().length >= 12 && newData.child('phone').val().length <= 13)",
+          "name": {
+            ".validate": "newData.isString()"
+          },
+          "phone": {
+            ".validate": "newData.isString()"
+          },
+          "relation": {
+            ".validate": "newData.isString() && newData.val().length <= 120"
+          },
+          "smsEnabled": {
+            ".validate": "newData.isBoolean()"
+          },
+          "allowTestSms": {
+            ".validate": "newData.isBoolean()"
+          },
+          "notifyAccident": {
+            ".validate": "newData.isBoolean()"
+          },
+          "notifyDrowsiness": {
+            ".validate": "newData.isBoolean()"
+          },
+          "notifyEmergencyButton": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "smsSettings": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "templates": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('profile').child('role').val() === 'owner' && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+          "$eventType": {
+            ".validate": "($eventType === 'accident' || $eventType === 'drowsiness' || $eventType === 'emergencyButton') && newData.isString() && newData.val().length >= 1 && newData.val().length <= 240"
+          }
+        },
+        "config": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('profile').child('role').val() === 'owner' && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['mode','normalEnabledAt','notifyAccident','notifyDrowsiness','notifyEmergencyButton','revision']) && newData.child('revision').val() === (data.exists() ? data.child('revision').val() + 1 : 1) && ((newData.child('mode').val() === 'test' && newData.child('normalEnabledAt').val() === 0) || (newData.child('mode').val() === 'normal' && ((data.child('mode').val() === 'normal' && newData.child('normalEnabledAt').val() === data.child('normalEnabledAt').val()) || (data.child('mode').val() !== 'normal' && newData.child('normalEnabledAt').val() <= now && newData.child('normalEnabledAt').val() >= now - 5000))))",
+          "mode": { ".validate": "newData.val() === 'test' || newData.val() === 'normal'" },
+          "normalEnabledAt": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "notifyAccident": { ".validate": "newData.isBoolean()" },
+          "notifyDrowsiness": { ".validate": "newData.isBoolean()" },
+          "notifyEmergencyButton": { ".validate": "newData.isBoolean()" },
+          "revision": { ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1" },
+          "$other": { ".validate": false }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "smsTestRequests": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "$requestId": {
+          ".write": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && !data.exists() && newData.exists() && root.child('emergencyContacts').child($vehicleId).child(newData.child('contactId').val()).child('smsEnabled').val() === true && root.child('emergencyContacts').child($vehicleId).child(newData.child('contactId').val()).child('allowTestSms').val() === true && ((newData.child('eventType').val() === 'accident' && root.child('emergencyContacts').child($vehicleId).child(newData.child('contactId').val()).child('notifyAccident').val() === true) || (newData.child('eventType').val() === 'drowsiness' && root.child('emergencyContacts').child($vehicleId).child(newData.child('contactId').val()).child('notifyDrowsiness').val() === true) || (newData.child('eventType').val() === 'emergencyButton' && root.child('emergencyContacts').child($vehicleId).child(newData.child('contactId').val()).child('notifyEmergencyButton').val() === true))",
+          ".validate": "newData.hasChildren(['contactId','eventType','requestedAt']) && newData.child('contactId').isString() && newData.child('eventType').isString() && (newData.child('eventType').val() === 'accident' || newData.child('eventType').val() === 'drowsiness' || newData.child('eventType').val() === 'emergencyButton') && newData.child('requestedAt').isNumber()",
+          "contactId": {
+            ".validate": "newData.isString()"
+          },
+          "eventType": {
+            ".validate": "newData.isString()"
+          },
+          "requestedAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "smsDispatch": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        ".write": false
+      }
+    },
+    "drowsinessCalibrationRequests": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "$requestId": {
+          ".write": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChildren(['requestedAt']) && newData.child('requestedAt').isNumber()",
+          "requestedAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "requests": {
+      "$vehicleId": {
+        ".read": "auth != null && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid",
+        "$requestId": {
+          ".read": "auth != null && (root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid || data.child('createdBy').val() === auth.uid)",
+          ".write": "auth != null && ((!data.exists() && newData.child('createdBy').val() === auth.uid && (root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid || root.child('vehicleMembers').child($vehicleId).child(auth.uid).exists()) && newData.child('source').val() === 'mobile' && newData.child('status').val() === 'pending' && newData.child('createdByName').val() === root.child('users').child(auth.uid).child('profile').child('name').val() && ((!newData.child('latitude').exists() && !newData.child('longitude').exists() && !newData.child('locationUpdatedAt').exists()) || (newData.child('latitude').val() === root.child('deviceData').child($vehicleId).child('location').child('latitude').val() && newData.child('longitude').val() === root.child('deviceData').child($vehicleId).child('location').child('longitude').val() && newData.child('locationUpdatedAt').val() === root.child('deviceData').child($vehicleId).child('location').child('updatedAt').val()))) || (data.exists() && root.child('vehicles').child($vehicleId).child('meta').child('ownerUid').val() === auth.uid && newData.child('createdBy').val() === data.child('createdBy').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('message').val() === data.child('message').val() && newData.child('type').val() === data.child('type').val() && newData.child('source').val() === data.child('source').val() && newData.child('latitude').val() === data.child('latitude').val() && newData.child('longitude').val() === data.child('longitude').val() && newData.child('locationUpdatedAt').val() === data.child('locationUpdatedAt').val() && (newData.child('status').val() === 'acknowledged' || newData.child('status').val() === 'resolved')))",
+          ".validate": "newData.hasChildren(['createdBy','createdByName','type','source','message','createdAt','status']) && newData.child('createdBy').isString() && newData.child('createdByName').isString() && newData.child('createdByName').val().length <= 120 && newData.child('message').isString() && newData.child('message').val().length <= 500 && newData.child('createdAt').isNumber() && (newData.child('type').val() === 'medical' || newData.child('type').val() === 'security' || newData.child('type').val() === 'vehicle_issue' || newData.child('type').val() === 'other') && newData.child('source').val() === 'mobile'"
+        }
+      }
+    },
+    "myRequests": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$requestId": {
+          ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.child('vehicleId').isString() && root.child('requests').child(newData.child('vehicleId').val()).child($requestId).child('createdBy').val() === auth.uid"
+        }
+      }
+    }
+  }
+}
